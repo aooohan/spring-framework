@@ -104,14 +104,18 @@ public class AsyncExecutionInterceptor extends AsyncExecutionAspectSupport imple
 		Method specificMethod = ClassUtils.getMostSpecificMethod(invocation.getMethod(), targetClass);
 		final Method userDeclaredMethod = BridgeMethodResolver.findBridgedMethod(specificMethod);
 
+		// 获取一个线程池
 		AsyncTaskExecutor executor = determineAsyncExecutor(userDeclaredMethod);
 		if (executor == null) {
 			throw new IllegalStateException(
 					"No executor specified and no default executor set on AsyncExecutionInterceptor either");
 		}
 
+		// 将joinpoint 封装成一个 异步任务
 		Callable<Object> task = () -> {
 			try {
+				// 执行下一个interceptor
+				// ps: 当前interceptor是在chain中，所以调用这个proceed() ，不一定执行的就是实际的method
 				Object result = invocation.proceed();
 				if (result instanceof Future) {
 					return ((Future<?>) result).get();
@@ -126,6 +130,7 @@ public class AsyncExecutionInterceptor extends AsyncExecutionAspectSupport imple
 			return null;
 		};
 
+		// 提交到线程池去执行
 		return doSubmit(task, executor, invocation.getMethod().getReturnType());
 	}
 

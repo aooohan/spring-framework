@@ -163,14 +163,23 @@ public abstract class AsyncExecutionAspectSupport implements BeanFactoryAware {
 	 */
 	@Nullable
 	protected AsyncTaskExecutor determineAsyncExecutor(Method method) {
+		// 先从缓存里取当前method对应的AsyncTaskExecutor
 		AsyncTaskExecutor executor = this.executors.get(method);
 		if (executor == null) {
 			Executor targetExecutor;
+			// 获取限定的executor的名称
+			// 限制了executor的话，就获取限定的
+			// 没限制的使用默认的
 			String qualifier = getExecutorQualifier(method);
 			if (StringUtils.hasLength(qualifier)) {
 				targetExecutor = findQualifiedExecutor(this.beanFactory, qualifier);
 			}
 			else {
+				/*
+				* 默认的线程池来源有二：
+				* 1.外部指定
+				* 2.从beanFactory里检索TaskExecutor
+				* */
 				targetExecutor = this.defaultExecutor.get();
 			}
 			if (targetExecutor == null) {
@@ -211,9 +220,11 @@ public abstract class AsyncExecutionAspectSupport implements BeanFactoryAware {
 					" to access qualified executor '" + qualifier + "'");
 		}
 		if (beanFactory instanceof ConfigurableBeanFactory configurableBeanFactory) {
+			// 解析一下qualifier的内容，可能包含一些特殊的东西，eg： 占位符，el表达式
 			EmbeddedValueResolver embeddedValueResolver = new EmbeddedValueResolver(configurableBeanFactory);
 			qualifier = embeddedValueResolver.resolveStringValue(qualifier);
 		}
+		// 去beanFactory获取bean
 		return BeanFactoryAnnotationUtils.qualifiedBeanOfType(beanFactory, Executor.class, qualifier);
 	}
 
@@ -317,11 +328,14 @@ public abstract class AsyncExecutionAspectSupport implements BeanFactoryAware {
 	 * @param params the parameters used to invoke the method
 	 */
 	protected void handleError(Throwable ex, Method method, Object... params) throws Exception {
+		// 返回是Future或其子类，则直接抛出
+		// Future.get() 是允许抛出异常的
 		if (Future.class.isAssignableFrom(method.getReturnType())) {
 			ReflectionUtils.rethrowException(ex);
 		}
 		else {
 			// Could not transmit the exception to the caller with default executor
+			// 其他的类型，就直接调用AsyncUncaughtExceptionHandler来处理
 			try {
 				this.exceptionHandler.obtain().handleUncaughtException(ex, method, params);
 			}
