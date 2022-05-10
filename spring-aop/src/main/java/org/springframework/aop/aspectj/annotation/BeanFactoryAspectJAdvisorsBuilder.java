@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.PerClauseKind;
 
 import org.springframework.aop.Advisor;
@@ -89,8 +90,11 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 				if (aspectNames == null) {
 					List<Advisor> advisors = new ArrayList<>();
 					aspectNames = new ArrayList<>();
-					String[] beanNames = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
+					String[] beanNames1 = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
 							this.beanFactory, Object.class, true, false);
+					String[] beanNames = BeanFactoryUtils.beanNamesForAnnotationIncludingAncestors(
+							this.beanFactory,
+							Aspect.class);
 					for (String beanName : beanNames) {
 						if (!isEligibleBean(beanName)) {
 							continue;

@@ -135,7 +135,9 @@ class StandaloneMockMvcBuilderTests {
 	private static class PlaceholderController {
 
 		@RequestMapping(value = "${sys.login.ajax}")
-		private void handleWithPlaceholders() { }
+		private void handleWithPlaceholders() {
+			System.out.println("被执行拉");
+		}
 	}
 
 

@@ -172,7 +172,7 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 				// The target does not implement the hashCode() method itself.
 				return hashCode();
 			}
-			else if (method.getDeclaringClass() == DecoratingProxy.class) {
+			else if (method.getDeclaringClass() == DecoratingProxy.class) { // 暂时没有用的，过
 				// There is only getDecoratedClass() declared -> dispatch to proxy config.
 				return AopProxyUtils.ultimateTargetClass(this.advised);
 			}
